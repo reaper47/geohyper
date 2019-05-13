@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Retrieve geolocation information of an IPv4 address from the Regional Internet Registries.">
+    <meta property="og:title" content="GeoHyper">
+    <meta property="og:image" content="https://developer.cdn.mozilla.net/static/img/opengraph-logo.dc4e08e2f6af.png">
+    <meta property="og:description" content="Retrieve geolocation information of an IPv4 address from the Regional Internet Registries.">
+    <link rel="shortcut icon" type="image/ico" href="/favicon.ico"/>
+    <title>GeoHyper</title>
+  </head>
+  <body>
+    <div>
+      <div>
+        <p>Enter an IPv4 address:</p>
+        <input id="ip-address" type="text">
+      </div>
+      <button id="query-ip" type="button">Query</button>
+    </div>
+    <table id="table-ips">
+      <tr>
+        <th>IP</th>
+        <th>Low IP</th>
+        <th>High IP</th>
+        <th>Range</th>
+        <th>Country</th>
+        <th>RIR</th>
+      </tr>
+    </table>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ipInput = document.getElementById('ip-address')
+      const table = document.getElementById('table-ips')
+
+      document.getElementById('query-ip').addEventListener('click', () => queryIP(table, ipInput))
+      ipInput.addEventListener('keydown', (event) => {
+        if (event.keyCode === 13)
+          queryIP(table, ipInput)
+      })
+    })
+
+    function queryIP(table, ipInput) {
+      const xhr = new XMLHttpRequest()
+      xhr.responseType = 'json'
+
+      xhr.onload = () => {
+        const json = xhr.response
+        if (Object.keys(json).length > 0 && !isInTable('table-ips', ipInput.value)) {
+          const data = [json['ip'], json['ip_low'], json['ip_high'],
+                        json['range'], json['country'], json['rir'].toUpperCase()]
+          const row = table.insertRow()
+          data.forEach(el => row.insertCell().innerHTML = el )
+        }
+      }
+
+      xhr.open('POST', `/lookup/${ipInput.value}`)
+      xhr.send(null)
+    }
+
+    function isInTable(id, value) {
+      const rows = document.getElementById(id).tBodies[0].children
+      for (let i = 1; i < rows.length; i++) {
+        for (let j = 0; j < rows[i].childElementCount; j++) {
+          if (rows[i].children[j].innerHTML.localeCompare(value) === 0)
+            return true
+        }
+      }
+      return false
+    }
+    </script>
+  </body>
+</html>
