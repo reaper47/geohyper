@@ -1,11 +1,12 @@
 import codecs
+import contextlib
 import csv
 import ipaddress
 import math
-import sqlite3
 import urllib.request
 import database
 from difflib import SequenceMatcher
+
 
 rirs = ['https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest',
         'https://ftp.ripe.net/ripe/stats/delegated-ripencc-extended-latest',
@@ -20,27 +21,25 @@ def size_to_cidr_mask(c):
 
 def parse_rir_files():
     for url in rirs:
-        ftpstream= urllib.request.urlopen(url)
+        ftpstream = urllib.request.urlopen(url)
         lines = list(map(lambda x: x[0].split('|'), csv.reader(codecs.iterdecode(ftpstream, 'utf-8'))))
         for line in lines:
-            try:
+            with contextlib.suppress(ValueError):
                 rir, iso, ipv, ip, mask, *_ = line
-            except ValueError:
-                continue
 
-            if ip == '*':
-                continue
+                if ip == '*':
+                    continue
 
-            if ipv == 'ipv4':
-                length = int(mask)
-                addr = ipaddress.ip_address(ip)
-                yield {
-                    'ip_low': addr,
-                    'ip_high': addr + length - 1,
-                    'rir': rir,
-                    'country': iso,
-                    'range': f'{ip}/{size_to_cidr_mask(length)}',
-                }
+                if ipv == 'ipv4':
+                    length = int(mask)
+                    addr = ipaddress.ip_address(ip)
+                    yield {
+                        'ip_low': addr,
+                        'ip_high': addr + length - 1,
+                        'rir': rir,
+                        'country': iso,
+                        'range': f'{ip}/{size_to_cidr_mask(length)}',
+                    }
 
 
 def lookup(ip: str):
