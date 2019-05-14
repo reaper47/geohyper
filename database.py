@@ -2,7 +2,7 @@ import sqlite3
 import os
 import geoip
 
-DB_NAME = 'geoip.db'
+DB_NAME = f'{os.path.dirname(__file__)}/geoip.db'
 TABLE = 'geoips'
 
 
